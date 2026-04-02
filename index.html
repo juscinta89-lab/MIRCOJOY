@@ -2,41 +2,32 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Robot Controller PRO</title>
+<title>Robot Pro X</title>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial;
   background: #0f172a;
   color: white;
   text-align: center;
+  font-family: Arial;
 }
 
-h2 {
-  margin-top: 10px;
-}
+h2 { margin: 10px; }
 
-#connectBtn {
-  padding: 12px 20px;
-  font-size: 16px;
-  margin: 10px;
+#connect {
+  padding: 10px 20px;
   background: #22c55e;
   border: none;
   border-radius: 10px;
 }
 
-.container {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 20px;
-}
-
-.joystick {
+.joy {
   width: 220px;
   height: 220px;
   background: #1e293b;
   border-radius: 50%;
+  margin: 30px auto;
   position: relative;
 }
 
@@ -50,101 +41,67 @@ h2 {
   left: 65px;
 }
 
-.buttons {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
 .btn {
   width: 100px;
-  height: 70px;
-  margin: 15px;
+  height: 60px;
+  margin: 10px;
   font-size: 20px;
-  border-radius: 15px;
+  border-radius: 10px;
   border: none;
 }
 
-#btnA { background: #ef4444; }
-#btnB { background: #f59e0b; }
-
-.status {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #94a3b8;
-}
+#A { background: red; }
+#B { background: orange; }
 </style>
 </head>
 
 <body>
 
-<h2>🤖 Robot Controller PRO</h2>
-<button id="connectBtn">Connect Bluetooth</button>
-<div class="status" id="status">Not Connected</div>
+<h2>🤖 Robot X Control</h2>
+<button id="connect">Connect</button>
 
-<div class="container">
-  
-  <!-- JOYSTICK -->
-  <div class="joystick" id="joy">
-    <div class="stick" id="stick"></div>
-  </div>
-
-  <!-- BUTTONS -->
-  <div class="buttons">
-    <button class="btn" id="btnA">A</button>
-    <button class="btn" id="btnB">B</button>
-  </div>
-
+<div class="joy" id="joy">
+  <div class="stick" id="stick"></div>
 </div>
 
+<button class="btn" id="A">A</button>
+<button class="btn" id="B">B</button>
+
 <script>
-let device, characteristic;
-let statusText = document.getElementById("status");
+let char;
 
 // CONNECT
-document.getElementById("connectBtn").onclick = async () => {
-  try {
-    device = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: "BBC micro:bit" }],
-      optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
-    });
+document.getElementById("connect").onclick = async () => {
+  let device = await navigator.bluetooth.requestDevice({
+    filters: [{ namePrefix: "BBC micro:bit" }],
+    optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+  });
 
-    const server = await device.gatt.connect();
-    const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+  let server = await device.gatt.connect();
+  let service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+  char = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
 
-    characteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
-
-    statusText.innerText = "✅ Connected";
-  } catch (e) {
-    statusText.innerText = "❌ Failed";
-    console.log(e);
-  }
+  alert("Connected!");
 };
 
-// SEND DATA
 function send(data) {
-  if (!characteristic) return;
-  let encoder = new TextEncoder();
-  characteristic.writeValue(encoder.encode(data + "\n"));
+  if (!char) return;
+  char.writeValue(new TextEncoder().encode(data + "\n"));
 }
 
 // BUTTON
-document.getElementById("btnA").ontouchstart = () => send("BTN:A");
-document.getElementById("btnB").ontouchstart = () => send("BTN:B");
+A.ontouchstart = () => send("A");
+B.ontouchstart = () => send("B");
 
 // JOYSTICK
 let joy = document.getElementById("joy");
 let stick = document.getElementById("stick");
 
-let center = { x: 110, y: 110 };
+let center = {x:110, y:110};
 let max = 80;
 
-let lastX = 0;
-let lastY = 0;
-
-joy.addEventListener("touchmove", (e) => {
+joy.addEventListener("touchmove", e => {
   let rect = joy.getBoundingClientRect();
-
   let x = e.touches[0].clientX - rect.left;
   let y = e.touches[0].clientY - rect.top;
 
@@ -154,27 +111,27 @@ joy.addEventListener("touchmove", (e) => {
   dx = Math.max(-max, Math.min(max, dx));
   dy = Math.max(-max, Math.min(max, dy));
 
-  // smoothing
-  lastX = lastX * 0.7 + dx * 0.3;
-  lastY = lastY * 0.7 + dy * 0.3;
+  stick.style.left = (dx + 65) + "px";
+  stick.style.top = (dy + 65) + "px";
 
-  stick.style.left = (lastX + 65) + "px";
-  stick.style.top = (lastY + 65) + "px";
+  // normalize -100 to 100
+  let X = dx / max * 100;
+  let Y = -dy / max * 100;
 
-  let sendX = Math.round(lastX);
-  let sendY = Math.round(-lastY);
+  // TANK DRIVE CALC
+  let left = Y + X;
+  let right = Y - X;
 
-  send(`X:${sendX},Y:${sendY}`);
+  left = Math.max(-100, Math.min(100, left));
+  right = Math.max(-100, Math.min(100, right));
+
+  send(`L:${Math.round(left)},R:${Math.round(right)}`);
 });
 
 joy.addEventListener("touchend", () => {
   stick.style.left = "65px";
   stick.style.top = "65px";
-
-  send("X:0,Y:0");
-
-  lastX = 0;
-  lastY = 0;
+  send("L:0,R:0");
 });
 </script>
 
