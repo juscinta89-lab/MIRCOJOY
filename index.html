@@ -3,152 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MICROJOY V1</title>
+    <title>MICROJOY</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#050505">
     <link rel="apple-touch-icon" href="icon.png">
 
-<style>
-    :root {
-        --bg-color: #020303;
-        --panel-bg: #0a0f0a;
-        --accent: #7a8f6b;
-        --accent-dim: #2e3b2f;
-        --danger: #ff3b3b;
-        --text-main: #cfd6cf;
-    }
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-bg: #111;
+            --accent: #00ffcc;
+            --accent-dim: #004d40;
+            --danger: #ff2a2a;
+            --text-main: #e0e0e0;
+        }
 
-    * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; user-select: none; -webkit-user-select: none; }
+        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; user-select: none; -webkit-user-select: none; }
 
-    html, body {
-        margin: 0; padding: 0;
-        width: 100%; height: 100dvh;
-        background-color: var(--bg-color);
-        color: var(--text-main);
-        overflow: hidden;
-        touch-action: none;
-        display: flex; flex-direction: column;
-    }
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100dvh;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            touch-action: none;
+            display: flex; flex-direction: column;
+        }
 
-    .header {
-        padding: 12px 15px; background: var(--panel-bg);
-        border-bottom: 1px solid var(--accent-dim);
-        display: flex; justify-content: space-between; align-items: center;
-        z-index: 100;
-    }
-    
-    .brand-line { font-weight: bold; color: var(--accent); letter-spacing: 1px; font-size: 1rem; white-space: nowrap; }
-    .ver-tag { color: #ffffff; font-size: 0.6rem; opacity: 0.5; margin-left: 6px; }
-    
-    .status-container { display: flex; align-items: center; gap: 10px; }
-    #status { font-size: 0.7rem; color: var(--danger); text-transform: uppercase; font-weight: bold; }
-    #status.connected { color: var(--accent); }
+        /* --- HEADER --- */
+        .header {
+            padding: 12px 15px; background: var(--panel-bg);
+            border-bottom: 1px solid var(--accent-dim);
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
+        }
+        
+        .brand-line { font-weight: bold; color: var(--accent); letter-spacing: 1px; font-size: 1rem; white-space: nowrap; }
+        .ver-tag { color: #ffffff; font-size: 0.6rem; opacity: 0.5; margin-left: 6px; }
+        
+        .status-container { display: flex; align-items: center; gap: 10px; }
+        #status { font-size: 0.7rem; color: var(--danger); text-transform: uppercase; font-weight: bold; }
+        #status.connected { color: var(--accent); }
 
-    .btn-connect {
-        background: rgba(122, 143, 107, 0.1); color: var(--accent);
-        border: 1px solid var(--accent); padding: 7px 12px;
-        font-size: 0.8rem; text-transform: uppercase; cursor: pointer;
-        clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-    }
+        .btn-connect {
+            background: rgba(0, 255, 204, 0.1); color: var(--accent);
+            border: 1px solid var(--accent); padding: 7px 12px;
+            font-size: 0.8rem; text-transform: uppercase; cursor: pointer;
+            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+        }
 
-    .control-grid {
-        flex: 1; display: flex; flex-direction: column;
-        justify-content: center; align-items: center; gap: 20px;
-        padding: 20px; padding-top: 8vh; padding-bottom: 5vh; 
-        position: relative;
-    }
+        /* --- CONTROL GRID --- */
+        .control-grid {
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; gap: 20px;
+            padding: 20px; padding-top: 8vh; padding-bottom: 5vh; 
+            position: relative;
+        }
 
-    .telemetry-hud {
-        background: #000; border: 1px solid var(--accent-dim);
-        padding: 8px 18px; border-radius: 20px;
-        font-size: 1.1rem; font-weight: bold; color: var(--accent);
-        text-align: center; box-shadow: 0 0 15px rgba(122,143,107,0.1);
-        z-index: 10; transition: color 0.3s;
-    }
-    .telemetry-hud.offline { color: #444; border-color: #222; box-shadow: none; }
+        .telemetry-hud {
+            background: #000; border: 1px solid var(--accent-dim);
+            padding: 8px 18px; border-radius: 20px;
+            font-size: 1.1rem; font-weight: bold; color: var(--accent);
+            text-align: center; box-shadow: 0 0 15px rgba(0,255,204,0.1);
+            z-index: 10; transition: color 0.3s;
+        }
+        .telemetry-hud.offline { color: #444; border-color: #222; box-shadow: none; }
 
-    .left-thumb-zone {
-        width: 100%; height: 260px; position: relative;
-        display: flex; justify-content: center; align-items: center; touch-action: none;
-    }
+        /* Left Thumb Zone */
+        .left-thumb-zone {
+            width: 100%; height: 260px; position: relative;
+            display: flex; justify-content: center; align-items: center; touch-action: none;
+        }
 
-    .joystick-hitbox { width: 100%; height: 100%; position: absolute; touch-action: none; }
-    .joystick-base {
-        width: 180px; height: 180px; background: rgba(10, 15, 10, 0.6);
-        border: 2px solid rgba(122, 143, 107, 0.2); border-radius: 50%;
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        transition: top 0.2s ease-out, left 0.2s ease-out, border-color 0.2s; backdrop-filter: blur(4px);
-    }
-    .joystick-base.active { transition: none; border-color: rgba(122, 143, 107, 0.5); }
-    .joystick-base.max-throttle { border-color: var(--danger); box-shadow: 0 0 20px rgba(255, 59, 59, 0.3); }
+        /* Mode 1: Dynamic Joystick */
+        .joystick-hitbox { width: 100%; height: 100%; position: absolute; touch-action: none; }
+        .joystick-base {
+            width: 180px; height: 180px; background: rgba(20, 20, 20, 0.6);
+            border: 2px solid rgba(0, 255, 204, 0.2); border-radius: 50%;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            transition: top 0.2s ease-out, left 0.2s ease-out, border-color 0.2s; backdrop-filter: blur(4px);
+        }
+        .joystick-base.active { transition: none; border-color: rgba(0, 255, 204, 0.5); }
+        .joystick-base.max-throttle { border-color: var(--danger); box-shadow: 0 0 20px rgba(255, 42, 42, 0.3); }
+        .joystick-base::before, .joystick-base::after { content: ''; position: absolute; background: rgba(0, 255, 204, 0.2); }
+        .joystick-base::before { width: 1px; height: 100%; left: 50%; top: 0; }
+        .joystick-base::after { height: 1px; width: 100%; top: 50%; left: 0; box-shadow: 0 0 5px rgba(0,255,204,0.5); }
+        .thumbstick {
+            width: 65px; height: 65px; background: radial-gradient(circle, var(--accent) 0%, #008f72 100%);
+            border-radius: 50%; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 -3px 5px rgba(0,0,0,0.3);
+        }
+        .joystick-base.max-throttle .thumbstick { background: radial-gradient(circle, var(--danger) 0%, #8f0000 100%); }
 
-    .joystick-base::before, .joystick-base::after { content: ''; position: absolute; background: rgba(122, 143, 107, 0.2); }
-    .joystick-base::before { width: 1px; height: 100%; left: 50%; top: 0; }
-    .joystick-base::after { height: 1px; width: 100%; top: 50%; left: 0; box-shadow: 0 0 5px rgba(122,143,107,0.5); }
+        /* Mode 2: D-Pad */
+        .dpad-zone {
+            width: 190px; height: 190px; position: absolute; touch-action: none;
+            display: none; 
+        }
+        .dpad-btn {
+            position: absolute; width: 65px; height: 65px; border-radius: 12px;
+            background: rgba(30, 30, 30, 0.8); border: 2px solid rgba(0, 255, 204, 0.3);
+            color: var(--accent); font-size: 1.8rem; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5); transition: background 0.05s, transform 0.05s; touch-action: none;
+        }
+        .dpad-up { top: 0; left: 50%; transform: translateX(-50%); }
+        .dpad-down { bottom: 0; left: 50%; transform: translateX(-50%); }
+        .dpad-left { top: 50%; left: 0; transform: translateY(-50%); }
+        .dpad-right { top: 50%; right: 0; transform: translateY(-50%); }
+        
+        .dpad-btn.active-toggle { background: var(--accent); color: #000; border-color: #fff; box-shadow: 0 0 20px var(--accent); }
+        .dpad-up.active-toggle { transform: translateX(-50%) translateY(2px) scale(0.95); }
+        .dpad-down.active-toggle { transform: translateX(-50%) translateY(2px) scale(0.95); }
+        .dpad-left.active-toggle { transform: translateY(-50%) translateY(2px) scale(0.95); }
+        .dpad-right.active-toggle { transform: translateY(-50%) translateY(2px) scale(0.95); }
 
-    .thumbstick {
-        width: 65px; height: 65px; background: radial-gradient(circle, var(--accent) 0%, #3a4a3a 100%);
-        border-radius: 50%; position: absolute; top: 50%; left: 50%;
-        transform: translate(-50%, -50%); pointer-events: none;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 -3px 5px rgba(0,0,0,0.3);
-    }
-    .joystick-base.max-throttle .thumbstick { background: radial-gradient(circle, var(--danger) 0%, #5a0000 100%); }
+        /* Right Thumb: Stacked Buttons */
+        .action-column { display: flex; flex-direction: column; gap: 20px; touch-action: none; z-index: 10; }
+        .btn-action {
+            width: 110px; height: 65px; border-radius: 15px;
+            background: rgba(30, 30, 30, 0.8); border: 2px solid rgba(0, 255, 204, 0.3);
+            color: var(--accent); font-size: 1.5rem; font-weight: bold;
+            display: flex; justify-content: center; align-items: center; touch-action: none;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.1);
+            transition: transform 0.05s, box-shadow 0.05s, background 0.05s;
+        }
+        .btn-action.active-toggle { 
+            transform: scale(0.92) translateY(4px); background: var(--accent); color: #000;
+            box-shadow: 0 0 25px var(--accent), inset 0 5px 10px rgba(0,0,0,0.5); border-color: #fff;
+        }
 
-    .dpad-zone {
-        width: 190px; height: 190px; position: absolute; touch-action: none;
-        display: none; 
-    }
-    .dpad-btn {
-        position: absolute; width: 65px; height: 65px; border-radius: 12px;
-        background: rgba(20, 25, 20, 0.8); border: 2px solid rgba(122, 143, 107, 0.3);
-        color: var(--accent); font-size: 1.8rem; display: flex; justify-content: center; align-items: center;
-        box-shadow: 0 5px 10px rgba(0,0,0,0.5); transition: background 0.05s, transform 0.05s; touch-action: none;
-    }
+        /* Bottom Right Cluster */
+        .bottom-right-cluster {
+            position: fixed; bottom: 20px; right: 20px; display: flex; gap: 12px; z-index: 200;
+        }
+        .btn-icon {
+            background: rgba(0, 255, 204, 0.1); border: 1px solid var(--accent-dim);
+            color: var(--accent); font-size: 1.5rem; width: 50px; height: 50px; border-radius: 12px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .btn-icon:active { background: var(--accent); color: #000; }
 
-    .dpad-btn.active-toggle { background: var(--accent); color: #000; border-color: #fff; box-shadow: 0 0 20px var(--accent); }
-
-    .action-column { display: flex; flex-direction: column; gap: 20px; touch-action: none; z-index: 10; }
-    .btn-action {
-        width: 110px; height: 65px; border-radius: 15px;
-        background: rgba(20, 25, 20, 0.8); border: 2px solid rgba(122, 143, 107, 0.3);
-        color: var(--accent); font-size: 1.5rem; font-weight: bold;
-        display: flex; justify-content: center; align-items: center; touch-action: none;
-        box-shadow: 0 8px 15px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.1);
-        transition: transform 0.05s, box-shadow 0.05s, background 0.05s;
-    }
-
-    .btn-action.active-toggle { 
-        transform: scale(0.92) translateY(4px); background: var(--accent); color: #000;
-        box-shadow: 0 0 25px var(--accent), inset 0 5px 10px rgba(0,0,0,0.5); border-color: #fff;
-    }
-
-    .bottom-right-cluster {
-        position: fixed; bottom: 20px; right: 20px; display: flex; gap: 12px; z-index: 200;
-    }
-    .btn-icon {
-        background: rgba(122, 143, 107, 0.1); border: 1px solid var(--accent-dim);
-        color: var(--accent); font-size: 1.5rem; width: 50px; height: 50px; border-radius: 12px;
-        display: flex; justify-content: center; align-items: center; cursor: pointer;
-        box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-    .btn-icon:active { background: var(--accent); color: #000; }
-
-    @media (orientation: landscape) {
-        .header { padding: 5px 15px; }
-        .control-grid { flex-direction: row; justify-content: space-between; align-items: center; padding: 10px 20px; padding-bottom: 0; }
-        .left-thumb-zone { width: 30vw; height: 100%; order: 1; }
-        .telemetry-hud { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 140px; font-size: 0.9rem; margin: 0; }
-        .action-column { order: 3; margin-right: 6vw; }
-        .bottom-right-cluster { bottom: 15px; right: 15px; }
-        .btn-icon { width: 45px; height: 45px; }
-    }
-</style>
+        /* --- LANDSCAPE OVERRIDES --- */
+        @media (orientation: landscape) {
+            .header { padding: 5px 15px; }
+            .control-grid { flex-direction: row; justify-content: space-between; align-items: center; padding: 10px 20px; padding-bottom: 0; }
+            .left-thumb-zone { width: 30vw; height: 100%; order: 1; }
+            .telemetry-hud { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 140px; font-size: 0.9rem; margin: 0; }
+            .action-column { order: 3; margin-right: 6vw; }
+            .bottom-right-cluster { bottom: 15px; right: 15px; }
+            .btn-icon { width: 45px; height: 45px; }
+        }
+    </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="brand-line">MICROJOY BY ALIMIN <span class="ver-tag">V1</span></div>
+        <div class="brand-line">MICROJOY BY ALIMIN <span class="ver-tag">v1</span></div>
         <div class="status-container">
             <span id="status">Offline</span>
             <button class="btn-connect" id="btnConnect">Connect</button>
@@ -264,11 +277,10 @@
             }
         }
 
-        // --- DYNAMIC JOYSTICK ENGINE (v1.1.9 CENTER DETENT) ---
+        // --- DYNAMIC JOYSTICK ENGINE ---
         const base = document.getElementById('joystickBase'), thumb = document.getElementById('thumbstick');
         let activePointerId = null, originX = 0, originY = 0, currentMaxRadius = 80;
-        let edgeHitLock = false; 
-        let wasReversing = false; // Tracks if the chassis is currently in the lower hemisphere
+        let edgeHitLock = false, wasReversing = false;
 
         joyHitbox.addEventListener('pointerdown', (e) => {
             if (activePointerId !== null) return;
@@ -297,20 +309,10 @@
             }
             
             thumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            cX = Math.round((dx / currentMaxRadius) * 90); 
-            cY = Math.round((-dy / currentMaxRadius) * 90);
+            cX = Math.round((dx / currentMaxRadius) * 90); cY = Math.round((-dy / currentMaxRadius) * 90);
 
-            // --- CENTER CROSSING DETENT LOGIC ---
-            // If pulling back past the -5 buffer, and we weren't reversing before
-            if (cY < -5 && !wasReversing) {
-                triggerHaptic(15); 
-                wasReversing = true;
-            } 
-            // If pushing forward past the +5 buffer, and we were reversing before
-            else if (cY > 5 && wasReversing) {
-                triggerHaptic(15); 
-                wasReversing = false;
-            }
+            if (cY < -5 && !wasReversing) { triggerHaptic(15); wasReversing = true; } 
+            else if (cY > 5 && wasReversing) { triggerHaptic(15); wasReversing = false; }
         });
 
         function resetJoystick(e) {
@@ -322,43 +324,4 @@
             forceKineticUpdate();
         }
 
-        joyHitbox.addEventListener('pointerup', resetJoystick); joyHitbox.addEventListener('pointercancel', resetJoystick);
-
-        // --- D-PAD ENGINE ---
-        const bindDpad = (id, axis, val) => {
-            const el = document.getElementById(id); let pid = null;
-            el.addEventListener('pointerdown', (e) => {
-                if (pid !== null) return; pid = e.pointerId; el.setPointerCapture(pid);
-                triggerHaptic(15); el.classList.add('active-toggle');
-                if (axis === 'x') cX = val; if (axis === 'y') cY = val;
-                forceKineticUpdate(); 
-            });
-            function release(e) {
-                if (pid !== e.pointerId) return; pid = null; el.classList.remove('active-toggle');
-                if (axis === 'x') cX = 0; if (axis === 'y') cY = 0;
-                forceKineticUpdate(); 
-            }
-            el.addEventListener('pointerup', release); el.addEventListener('pointercancel', release);
-        };
-        bindDpad('btnUp', 'y', 90); bindDpad('btnDown', 'y', -90);
-        bindDpad('btnLeft', 'x', -90); bindDpad('btnRight', 'x', 90);
-
-        // --- ACTION BUTTONS ---
-        const bindBtn = (id, char) => {
-            const el = document.getElementById(id); let pid = null;
-            el.addEventListener('pointerdown', (e) => { 
-                if (pid !== null) return; pid = e.pointerId; el.setPointerCapture(pid);
-                triggerHaptic(15); send(char.toUpperCase() + "\n"); el.classList.add('active-toggle'); 
-            });
-            function release(e) {
-                if (pid !== e.pointerId) return; pid = null;
-                send(char.toLowerCase() + "\n"); el.classList.remove('active-toggle');
-            }
-            el.addEventListener('pointerup', release); el.addEventListener('pointercancel', release);
-        };
-        bindBtn('btnA', 'a'); bindBtn('btnB', 'b');
-
-        setInterval(forceKineticUpdate, 50);
-    </script>
-</body>
-</html>
+        joyHitbox.addEventListener('pointerup', resetJoystick
