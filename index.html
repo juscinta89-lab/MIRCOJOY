@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MICROJOY</title>
+    <title>XINEJOY v1.2.0 (Stable)</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#050505">
@@ -43,7 +43,7 @@
         .ver-tag { color: #ffffff; font-size: 0.6rem; opacity: 0.5; margin-left: 6px; }
         
         .status-container { display: flex; align-items: center; gap: 10px; }
-        #status { font-size: 0.7rem; color: var(--danger); text-transform: uppercase; font-weight: bold; }
+        #status { font-size: 0.7rem; color: var(--danger); text-transform: uppercase; font-weight: bold; transition: color 0.3s; }
         #status.connected { color: var(--accent); }
 
         .btn-connect {
@@ -51,7 +51,9 @@
             border: 1px solid var(--accent); padding: 7px 12px;
             font-size: 0.8rem; text-transform: uppercase; cursor: pointer;
             clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+            transition: background 0.2s, color 0.2s;
         }
+        .btn-connect:active { background: var(--accent); color: #000; }
 
         /* --- CONTROL GRID --- */
         .control-grid {
@@ -89,6 +91,7 @@
         .joystick-base::before, .joystick-base::after { content: ''; position: absolute; background: rgba(0, 255, 204, 0.2); }
         .joystick-base::before { width: 1px; height: 100%; left: 50%; top: 0; }
         .joystick-base::after { height: 1px; width: 100%; top: 50%; left: 0; box-shadow: 0 0 5px rgba(0,255,204,0.5); }
+        
         .thumbstick {
             width: 65px; height: 65px; background: radial-gradient(circle, var(--accent) 0%, #008f72 100%);
             border-radius: 50%; position: absolute; top: 50%; left: 50%;
@@ -143,8 +146,9 @@
             color: var(--accent); font-size: 1.5rem; width: 50px; height: 50px; border-radius: 12px;
             display: flex; justify-content: center; align-items: center; cursor: pointer;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: all 0.2s;
         }
-        .btn-icon:active { background: var(--accent); color: #000; }
+        .btn-icon:active { background: var(--accent); color: #000; transform: scale(0.9); }
 
         /* --- LANDSCAPE OVERRIDES --- */
         @media (orientation: landscape) {
@@ -161,7 +165,7 @@
 <body>
 
     <div class="header">
-        <div class="brand-line">MICROJOY BY ALIMIN <span class="ver-tag">v1</span></div>
+        <div class="brand-line">XINEJOY BY TJ <span class="ver-tag">v1.2.0</span></div>
         <div class="status-container">
             <span id="status">Offline</span>
             <button class="btn-connect" id="btnConnect">Connect</button>
@@ -255,7 +259,7 @@
                 isConnected = true; statusEl.innerText = "ONLINE"; statusEl.classList.add('connected');
                 connBtn.innerText = "DISCONNECT"; telEl.classList.remove('offline');
                 await send("mode_analog\n");
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("BLE Connection Error:", e); }
         });
 
         bleDevice?.addEventListener('gattserverdisconnected', () => {
@@ -263,10 +267,34 @@
             connBtn.innerText = "CONNECT"; telEl.classList.add('offline'); telEl.innerText = "SEVERED";
         });
 
+        // --- SISTEM BERATURAN DATA (QUEUE) UNTUK MENGELAK KESESAKAN GATT ---
+        let isWriting = false;
+        let pendingMessage = null;
+
         async function send(s) {
             telEl.innerText = s.replace('\n','');
-            if (!rxChar) return;
-            try { await rxChar.writeValue(new TextEncoder().encode(s)); } catch (e) {}
+            if (!rxChar || !isConnected) return;
+
+            // Jika Bluetooth sedang sibuk menghantar, simpan mesej terakhir
+            if (isWriting) {
+                pendingMessage = s;
+                return;
+            }
+
+            isWriting = true;
+            try { 
+                await rxChar.writeValue(new TextEncoder().encode(s)); 
+            } catch (e) { 
+                console.warn("GATT Write Error:", e); 
+            }
+            isWriting = false;
+
+            // Jika ada mesej tertunggak selepas selesai hantar, proses mesej tersebut
+            if (pendingMessage) {
+                let nextMsg = pendingMessage;
+                pendingMessage = null;
+                send(nextMsg);
+            }
         }
 
         const fFormat = (v) => (v>=0?'+':'-') + Math.abs(v).toString().padStart(2,'0');
@@ -277,10 +305,11 @@
             }
         }
 
-        // --- DYNAMIC JOYSTICK ENGINE ---
+        // --- DYNAMIC JOYSTICK ENGINE (v1.2.0) ---
         const base = document.getElementById('joystickBase'), thumb = document.getElementById('thumbstick');
         let activePointerId = null, originX = 0, originY = 0, currentMaxRadius = 80;
-        let edgeHitLock = false, wasReversing = false;
+        let edgeHitLock = false; 
+        let wasReversing = false;
 
         joyHitbox.addEventListener('pointerdown', (e) => {
             if (activePointerId !== null) return;
@@ -309,10 +338,13 @@
             }
             
             thumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            cX = Math.round((dx / currentMaxRadius) * 90); cY = Math.round((-dy / currentMaxRadius) * 90);
+            cX = Math.round((dx / currentMaxRadius) * 90); 
+            cY = Math.round((-dy / currentMaxRadius) * 90);
 
             if (cY < -5 && !wasReversing) { triggerHaptic(15); wasReversing = true; } 
             else if (cY > 5 && wasReversing) { triggerHaptic(15); wasReversing = false; }
+            
+            forceKineticUpdate(); // Kemas kini dihantar terus apabila paksi berubah
         });
 
         function resetJoystick(e) {
@@ -324,4 +356,43 @@
             forceKineticUpdate();
         }
 
-        joyHitbox.addEventListener('pointerup', resetJoystick
+        joyHitbox.addEventListener('pointerup', resetJoystick); 
+        joyHitbox.addEventListener('pointercancel', resetJoystick);
+
+        // --- D-PAD ENGINE ---
+        const bindDpad = (id, axis, val) => {
+            const el = document.getElementById(id); let pid = null;
+            el.addEventListener('pointerdown', (e) => {
+                if (pid !== null) return; pid = e.pointerId; el.setPointerCapture(pid);
+                triggerHaptic(15); el.classList.add('active-toggle');
+                if (axis === 'x') cX = val; if (axis === 'y') cY = val;
+                forceKineticUpdate(); 
+            });
+            function release(e) {
+                if (pid !== e.pointerId) return; pid = null; el.classList.remove('active-toggle');
+                if (axis === 'x') cX = 0; if (axis === 'y') cY = 0;
+                forceKineticUpdate(); 
+            }
+            el.addEventListener('pointerup', release); el.addEventListener('pointercancel', release);
+        };
+        bindDpad('btnUp', 'y', 90); bindDpad('btnDown', 'y', -90);
+        bindDpad('btnLeft', 'x', -90); bindDpad('btnRight', 'x', 90);
+
+        // --- ACTION BUTTONS ---
+        const bindBtn = (id, char) => {
+            const el = document.getElementById(id); let pid = null;
+            el.addEventListener('pointerdown', (e) => { 
+                if (pid !== null) return; pid = e.pointerId; el.setPointerCapture(pid);
+                triggerHaptic(15); send(char.toUpperCase() + "\n"); el.classList.add('active-toggle'); 
+            });
+            function release(e) {
+                if (pid !== e.pointerId) return; pid = null;
+                send(char.toLowerCase() + "\n"); el.classList.remove('active-toggle');
+            }
+            el.addEventListener('pointerup', release); el.addEventListener('pointercancel', release);
+        };
+        bindBtn('btnA', 'a'); bindBtn('btnB', 'b');
+
+    </script>
+</body>
+</html>
