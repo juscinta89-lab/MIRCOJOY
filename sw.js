@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xinejoy-v1.1.9';
+const CACHE_NAME = 'microjoy-v1';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.png'];
 
 self.addEventListener('install', (e) => {
