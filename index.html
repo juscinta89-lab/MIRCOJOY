@@ -12,11 +12,11 @@
 <style>
     :root {
         --bg-color: #050000;
-        --panel-bg: #0d0000;
+        --panel-bg: #110000;
         --accent: #ff1a1a;
         --accent-dim: #4d0000;
-        --danger: #ff0000;
-        --text-main: #f5f5f5;
+        --danger: #ff2a2a;
+        --text-main: #e0e0e0;
     }
 
     * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; user-select: none; -webkit-user-select: none; }
@@ -24,113 +24,124 @@
     html, body {
         margin: 0; padding: 0;
         width: 100%; height: 100dvh;
-        background: radial-gradient(circle at center, #0a0000 0%, #000000 100%);
+        background-color: var(--bg-color);
         color: var(--text-main);
         overflow: hidden;
         touch-action: none;
         display: flex; flex-direction: column;
     }
 
-    /* HEADER */
     .header {
-        padding: 12px 15px;
-        background: linear-gradient(90deg, #0d0000, #1a0000);
-        border-bottom: 1px solid var(--accent);
+        padding: 12px 15px; background: var(--panel-bg);
+        border-bottom: 1px solid var(--accent-dim);
         display: flex; justify-content: space-between; align-items: center;
+        z-index: 100;
     }
-
-    .brand-line {
-        font-weight: bold;
-        color: var(--accent);
-        letter-spacing: 2px;
-        text-shadow: 0 0 8px var(--accent);
-    }
-
-    #status.connected {
-        color: var(--accent);
-        text-shadow: 0 0 6px var(--accent);
-    }
+    
+    .brand-line { font-weight: bold; color: var(--accent); letter-spacing: 1px; font-size: 1rem; white-space: nowrap; }
+    .ver-tag { color: #ffffff; font-size: 0.6rem; opacity: 0.5; margin-left: 6px; }
+    
+    .status-container { display: flex; align-items: center; gap: 10px; }
+    #status { font-size: 0.7rem; color: var(--danger); text-transform: uppercase; font-weight: bold; }
+    #status.connected { color: var(--accent); }
 
     .btn-connect {
-        background: rgba(255, 0, 0, 0.1);
-        color: var(--accent);
-        border: 1px solid var(--accent);
-        box-shadow: 0 0 10px rgba(255,0,0,0.3);
+        background: rgba(255, 26, 26, 0.1); color: var(--accent);
+        border: 1px solid var(--accent); padding: 7px 12px;
+        font-size: 0.8rem; text-transform: uppercase; cursor: pointer;
+        clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
     }
 
-    .btn-connect:hover {
-        background: rgba(255,0,0,0.2);
+    .control-grid {
+        flex: 1; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; gap: 20px;
+        padding: 20px; padding-top: 8vh; padding-bottom: 5vh; 
+        position: relative;
     }
 
-    /* TELEMETRY */
     .telemetry-hud {
-        background: #000;
-        border: 1px solid var(--accent);
-        color: var(--accent);
-        box-shadow: 0 0 15px rgba(255,0,0,0.3);
+        background: #000; border: 1px solid var(--accent-dim);
+        padding: 8px 18px; border-radius: 20px;
+        font-size: 1.1rem; font-weight: bold; color: var(--accent);
+        text-align: center; box-shadow: 0 0 15px rgba(255,26,26,0.1);
+        z-index: 10; transition: color 0.3s;
+    }
+    .telemetry-hud.offline { color: #444; border-color: #222; box-shadow: none; }
+
+    .left-thumb-zone {
+        width: 100%; height: 260px; position: relative;
+        display: flex; justify-content: center; align-items: center; touch-action: none;
     }
 
-    /* JOYSTICK */
+    .joystick-hitbox { width: 100%; height: 100%; position: absolute; touch-action: none; }
     .joystick-base {
-        background: rgba(20, 0, 0, 0.6);
-        border: 2px solid rgba(255, 0, 0, 0.3);
-        box-shadow: inset 0 0 20px rgba(255,0,0,0.2);
+        width: 180px; height: 180px; background: rgba(20, 0, 0, 0.6);
+        border: 2px solid rgba(255, 26, 26, 0.2); border-radius: 50%;
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        transition: top 0.2s ease-out, left 0.2s ease-out, border-color 0.2s; backdrop-filter: blur(4px);
     }
+    .joystick-base.active { transition: none; border-color: rgba(255, 26, 26, 0.5); }
+    .joystick-base.max-throttle { border-color: var(--danger); box-shadow: 0 0 20px rgba(255, 42, 42, 0.3); }
 
-    .joystick-base.active {
-        border-color: var(--accent);
-        box-shadow: 0 0 20px rgba(255,0,0,0.5);
-    }
-
-    .joystick-base.max-throttle {
-        border-color: #ffffff;
-        box-shadow: 0 0 25px rgba(255,0,0,0.8);
-    }
+    .joystick-base::before, .joystick-base::after { content: ''; position: absolute; background: rgba(255, 26, 26, 0.2); }
+    .joystick-base::before { width: 1px; height: 100%; left: 50%; top: 0; }
+    .joystick-base::after { height: 1px; width: 100%; top: 50%; left: 0; box-shadow: 0 0 5px rgba(255,26,26,0.5); }
 
     .thumbstick {
-        background: radial-gradient(circle, #ff1a1a 0%, #800000 100%);
-        box-shadow: 0 0 15px rgba(255,0,0,0.7);
+        width: 65px; height: 65px; background: radial-gradient(circle, var(--accent) 0%, #8f0000 100%);
+        border-radius: 50%; position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%); pointer-events: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 -3px 5px rgba(0,0,0,0.3);
     }
+    .joystick-base.max-throttle .thumbstick { background: radial-gradient(circle, var(--danger) 0%, #8f0000 100%); }
 
-    /* D-PAD */
+    .dpad-zone {
+        width: 190px; height: 190px; position: absolute; touch-action: none;
+        display: none; 
+    }
     .dpad-btn {
-        background: rgba(40, 0, 0, 0.8);
-        border: 2px solid rgba(255, 0, 0, 0.4);
-        color: var(--accent);
-        box-shadow: 0 0 10px rgba(255,0,0,0.3);
+        position: absolute; width: 65px; height: 65px; border-radius: 12px;
+        background: rgba(30, 0, 0, 0.8); border: 2px solid rgba(255, 26, 26, 0.3);
+        color: var(--accent); font-size: 1.8rem; display: flex; justify-content: center; align-items: center;
+        box-shadow: 0 5px 10px rgba(0,0,0,0.5); transition: background 0.05s, transform 0.05s; touch-action: none;
     }
 
-    .dpad-btn.active-toggle {
-        background: var(--accent);
-        color: #000;
-        box-shadow: 0 0 20px var(--accent);
-    }
+    .dpad-btn.active-toggle { background: var(--accent); color: #000; border-color: #fff; box-shadow: 0 0 20px var(--accent); }
 
-    /* ACTION BUTTON */
+    .action-column { display: flex; flex-direction: column; gap: 20px; touch-action: none; z-index: 10; }
     .btn-action {
-        background: rgba(40, 0, 0, 0.8);
-        border: 2px solid rgba(255, 0, 0, 0.4);
-        color: var(--accent);
-        box-shadow: 0 0 15px rgba(255,0,0,0.3);
+        width: 110px; height: 65px; border-radius: 15px;
+        background: rgba(30, 0, 0, 0.8); border: 2px solid rgba(255, 26, 26, 0.3);
+        color: var(--accent); font-size: 1.5rem; font-weight: bold;
+        display: flex; justify-content: center; align-items: center; touch-action: none;
+        box-shadow: 0 8px 15px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.1);
+        transition: transform 0.05s, box-shadow 0.05s, background 0.05s;
     }
 
-    .btn-action.active-toggle {
-        background: var(--accent);
-        color: #000;
-        box-shadow: 0 0 30px var(--accent);
+    .btn-action.active-toggle { 
+        transform: scale(0.92) translateY(4px); background: var(--accent); color: #000;
+        box-shadow: 0 0 25px var(--accent), inset 0 5px 10px rgba(0,0,0,0.5); border-color: #fff;
     }
 
-    /* ICON BUTTON */
+    .bottom-right-cluster {
+        position: fixed; bottom: 20px; right: 20px; display: flex; gap: 12px; z-index: 200;
+    }
     .btn-icon {
-        background: rgba(255, 0, 0, 0.1);
-        border: 1px solid var(--accent);
-        color: var(--accent);
-        box-shadow: 0 0 10px rgba(255,0,0,0.4);
+        background: rgba(255, 26, 26, 0.1); border: 1px solid var(--accent-dim);
+        color: var(--accent); font-size: 1.5rem; width: 50px; height: 50px; border-radius: 12px;
+        display: flex; justify-content: center; align-items: center; cursor: pointer;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
+    .btn-icon:active { background: var(--accent); color: #000; }
 
-    .btn-icon:active {
-        background: var(--accent);
-        color: #000;
+    @media (orientation: landscape) {
+        .header { padding: 5px 15px; }
+        .control-grid { flex-direction: row; justify-content: space-between; align-items: center; padding: 10px 20px; padding-bottom: 0; }
+        .left-thumb-zone { width: 30vw; height: 100%; order: 1; }
+        .telemetry-hud { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 140px; font-size: 0.9rem; margin: 0; }
+        .action-column { order: 3; margin-right: 6vw; }
+        .bottom-right-cluster { bottom: 15px; right: 15px; }
+        .btn-icon { width: 45px; height: 45px; }
     }
 </style>
 </head>
