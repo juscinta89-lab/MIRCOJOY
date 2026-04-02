@@ -1,127 +1,237 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MotionBit Controller</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>XINEJOY ORANGE v1.1.10</title>
 
 <style>
-body {
-  background: #0f172a;
-  color: white;
-  text-align: center;
-  font-family: Arial;
+:root {
+    --bg-color: #0a0a0a;
+    --panel-bg: #1a1a1a;
+    --accent: #ff7a00;
+    --accent-dim: #5a2d00;
+    --danger: #ff0000;
+    --text-main: #f5f5f5;
 }
 
-.joy {
-  width: 220px;
-  height: 220px;
-  background: #1e293b;
-  border-radius: 50%;
-  margin: 30px auto;
-  position: relative;
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+    user-select: none;
 }
 
-.stick {
-  width: 90px;
-  height: 90px;
-  background: #38bdf8;
-  border-radius: 50%;
-  position: absolute;
-  top: 65px;
-  left: 65px;
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100dvh;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-button {
-  margin: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
+/* HEADER */
+.header {
+    padding: 12px 15px;
+    background: var(--panel-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(255,122,0,0.2);
+}
+
+.brand-line {
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.ver-tag {
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+#status {
+    font-size: 0.7rem;
+    color: var(--danger);
+    font-weight: bold;
+}
+
+#status.connected {
+    color: var(--accent);
+}
+
+.btn-connect {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 6px 12px;
+}
+
+/* GRID */
+.control-grid {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+/* TELEMETRY */
+.telemetry-hud {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #000;
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+}
+
+/* JOYSTICK */
+.left-thumb-zone {
+    width: 40%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.joystick-base {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    position: relative;
+    box-shadow: 0 0 25px rgba(255,122,0,0.3);
+}
+
+.thumbstick {
+    width: 70px;
+    height: 70px;
+    background: radial-gradient(circle, #ff7a00, #5a2d00);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* DPAD */
+.dpad-zone {
+    display: none;
+}
+
+.dpad-btn {
+    background: #222;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+}
+
+/* ACTION BUTTON */
+.action-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.btn-action {
+    width: 110px;
+    height: 65px;
+    background: #222;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-size: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(255,122,0,0.3);
+}
+
+.btn-action:active {
+    background: var(--accent);
+    color: #000;
+}
+
+/* ICON BUTTON */
+.bottom-right-cluster {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-icon {
+    width: 50px;
+    height: 50px;
+    background: #111;
+    border: 1px solid var(--accent);
+    color: var(--accent);
 }
 </style>
 </head>
 
 <body>
 
-<h2>🤖 MotionBit Control</h2>
-
-<button onclick="connect()">Connect</button>
-<button onclick="send('mode_analog')">Analog</button>
-<button onclick="send('mode_dpad')">D-Pad</button>
-
-<div class="joy" id="joy">
-  <div class="stick" id="stick"></div>
+<div class="header">
+    <div class="brand-line">XINEJOY ORANGE <span class="ver-tag">v1.1.10</span></div>
+    <div>
+        <span id="status">OFFLINE</span>
+        <button class="btn-connect" id="btnConnect">CONNECT</button>
+    </div>
 </div>
 
-<button onclick="send('A')">A</button>
-<button onclick="send('B')">B</button>
+<div class="control-grid">
+
+    <div class="telemetry-hud" id="telemetryOut">AWAITING</div>
+
+    <div class="left-thumb-zone">
+        <div class="joystick-base" id="joystickBase">
+            <div class="thumbstick" id="thumbstick"></div>
+        </div>
+    </div>
+
+    <div class="action-column">
+        <div class="btn-action" id="btnA">A</div>
+        <div class="btn-action" id="btnB">B</div>
+    </div>
+
+</div>
+
+<div class="bottom-right-cluster">
+    <button class="btn-icon" id="btnToggleMode">✜</button>
+    <button class="btn-icon" id="btnFullscreen">⛶</button>
+</div>
 
 <script>
-let char;
+// BLE SAME ASAL
+const UART_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const UART_RX_CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-// CONNECT
-async function connect() {
-  let device = await navigator.bluetooth.requestDevice({
-    filters: [{ namePrefix: "BBC micro:bit" }],
-    optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
-  });
+let bleDevice, rxChar;
 
-  let server = await device.gatt.connect();
-  let service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
-  char = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+document.getElementById("btnConnect").onclick = async () => {
+    try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: "BBC" }, { namePrefix: "micro:bit" }],
+            optionalServices: [UART_SERVICE_UUID]
+        });
 
-  alert("Connected!");
-}
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService(UART_SERVICE_UUID);
+        rxChar = await service.getCharacteristic(UART_RX_CHARACTERISTIC_UUID);
 
-// SEND
-function send(data) {
-  if (!char) return;
-  char.writeValue(new TextEncoder().encode(data + "\n"));
-}
+        document.getElementById("status").innerText = "ONLINE";
+        document.getElementById("status").classList.add("connected");
 
-// FORMAT NUMBER → +05 / -72
-function format(val) {
-  val = Math.round(val);
-  let sign = val >= 0 ? "+" : "-";
-  let num = Math.abs(val).toString().padStart(2, "0");
-  return sign + num;
-}
-
-// JOYSTICK
-let joy = document.getElementById("joy");
-let stick = document.getElementById("stick");
-
-let center = {x:110, y:110};
-let max = 80;
-
-joy.addEventListener("touchmove", e => {
-  let rect = joy.getBoundingClientRect();
-
-  let x = e.touches[0].clientX - rect.left;
-  let y = e.touches[0].clientY - rect.top;
-
-  let dx = x - center.x;
-  let dy = y - center.y;
-
-  dx = Math.max(-max, Math.min(max, dx));
-  dy = Math.max(-max, Math.min(max, dy));
-
-  stick.style.left = (dx + 65) + "px";
-  stick.style.top = (dy + 65) + "px";
-
-  // scale -100 to 100
-  let X = dx / max * 100;
-  let Y = -dy / max * 100;
-
-  let msg = "X" + format(X) + ",Y" + format(Y);
-
-  send(msg);
-});
-
-joy.addEventListener("touchend", () => {
-  stick.style.left = "65px";
-  stick.style.top = "65px";
-
-  send("X+00,Y+00");
-});
+    } catch(e) {
+        console.log(e);
+    }
+};
 </script>
 
 </body>
