@@ -2,24 +2,14 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Robot Pro X</title>
+<title>MotionBit Controller</title>
 
 <style>
 body {
-  margin: 0;
   background: #0f172a;
   color: white;
   text-align: center;
   font-family: Arial;
-}
-
-h2 { margin: 10px; }
-
-#connect {
-  padding: 10px 20px;
-  background: #22c55e;
-  border: none;
-  border-radius: 10px;
 }
 
 .joy {
@@ -41,37 +31,34 @@ h2 { margin: 10px; }
   left: 65px;
 }
 
-.btn {
-  width: 100px;
-  height: 60px;
+button {
   margin: 10px;
-  font-size: 20px;
-  border-radius: 10px;
-  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
 }
-
-#A { background: red; }
-#B { background: orange; }
 </style>
 </head>
 
 <body>
 
-<h2>🤖 Robot X Control</h2>
-<button id="connect">Connect</button>
+<h2>🤖 MotionBit Control</h2>
+
+<button onclick="connect()">Connect</button>
+<button onclick="send('mode_analog')">Analog</button>
+<button onclick="send('mode_dpad')">D-Pad</button>
 
 <div class="joy" id="joy">
   <div class="stick" id="stick"></div>
 </div>
 
-<button class="btn" id="A">A</button>
-<button class="btn" id="B">B</button>
+<button onclick="send('A')">A</button>
+<button onclick="send('B')">B</button>
 
 <script>
 let char;
 
 // CONNECT
-document.getElementById("connect").onclick = async () => {
+async function connect() {
   let device = await navigator.bluetooth.requestDevice({
     filters: [{ namePrefix: "BBC micro:bit" }],
     optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
@@ -82,16 +69,21 @@ document.getElementById("connect").onclick = async () => {
   char = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
 
   alert("Connected!");
-};
+}
 
+// SEND
 function send(data) {
   if (!char) return;
   char.writeValue(new TextEncoder().encode(data + "\n"));
 }
 
-// BUTTON
-A.ontouchstart = () => send("A");
-B.ontouchstart = () => send("B");
+// FORMAT NUMBER → +05 / -72
+function format(val) {
+  val = Math.round(val);
+  let sign = val >= 0 ? "+" : "-";
+  let num = Math.abs(val).toString().padStart(2, "0");
+  return sign + num;
+}
 
 // JOYSTICK
 let joy = document.getElementById("joy");
@@ -102,6 +94,7 @@ let max = 80;
 
 joy.addEventListener("touchmove", e => {
   let rect = joy.getBoundingClientRect();
+
   let x = e.touches[0].clientX - rect.left;
   let y = e.touches[0].clientY - rect.top;
 
@@ -114,24 +107,20 @@ joy.addEventListener("touchmove", e => {
   stick.style.left = (dx + 65) + "px";
   stick.style.top = (dy + 65) + "px";
 
-  // normalize -100 to 100
+  // scale -100 to 100
   let X = dx / max * 100;
   let Y = -dy / max * 100;
 
-  // TANK DRIVE CALC
-  let left = Y + X;
-  let right = Y - X;
+  let msg = "X" + format(X) + ",Y" + format(Y);
 
-  left = Math.max(-100, Math.min(100, left));
-  right = Math.max(-100, Math.min(100, right));
-
-  send(`L:${Math.round(left)},R:${Math.round(right)}`);
+  send(msg);
 });
 
 joy.addEventListener("touchend", () => {
   stick.style.left = "65px";
   stick.style.top = "65px";
-  send("L:0,R:0");
+
+  send("X+00,Y+00");
 });
 </script>
 
