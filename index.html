@@ -74,26 +74,26 @@
 
         /* Left Thumb Zone */
         .left-thumb-zone {
-            width: 100%; height: 260px; position: relative;
+            width: 100%; height: 300px; position: relative;
             display: flex; justify-content: center; align-items: center; touch-action: none;
         }
 
-        /* Mode 1: Dynamic Joystick */
-        .joystick-hitbox { width: 100%; height: 100%; position: absolute; touch-action: none; }
+        /* Mode 1: STATIC Joystick */
+        .joystick-hitbox { width: 100%; height: 100%; position: absolute; touch-action: none; display: flex; justify-content: center; align-items: center; }
         .joystick-base {
-            width: 180px; height: 180px; background: rgba(20, 20, 20, 0.6);
+            width: 240px; height: 240px; background: rgba(20, 20, 20, 0.6);
             border: 2px solid rgba(255, 26, 64, 0.2); border-radius: 50%;
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            transition: top 0.2s ease-out, left 0.2s ease-out, border-color 0.2s; backdrop-filter: blur(4px);
+            position: relative;
+            transition: border-color 0.2s; backdrop-filter: blur(4px);
         }
-        .joystick-base.active { transition: none; border-color: rgba(255, 26, 64, 0.5); }
+        .joystick-base.active { border-color: rgba(255, 26, 64, 0.5); }
         .joystick-base.max-throttle { border-color: var(--danger); box-shadow: 0 0 20px rgba(255, 187, 0, 0.3); }
         .joystick-base::before, .joystick-base::after { content: ''; position: absolute; background: rgba(255, 26, 64, 0.2); }
         .joystick-base::before { width: 1px; height: 100%; left: 50%; top: 0; }
         .joystick-base::after { height: 1px; width: 100%; top: 50%; left: 0; box-shadow: 0 0 5px rgba(255, 26, 64, 0.5); }
         
         .thumbstick {
-            width: 65px; height: 65px; background: radial-gradient(circle, var(--accent) 0%, #8f001b 100%);
+            width: 85px; height: 85px; background: radial-gradient(circle, var(--accent) 0%, #8f001b 100%);
             border-radius: 50%; position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%); pointer-events: none;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 -3px 5px rgba(0,0,0,0.3);
@@ -102,13 +102,13 @@
 
         /* Mode 2: D-Pad */
         .dpad-zone {
-            width: 190px; height: 190px; position: absolute; touch-action: none;
+            width: 240px; height: 240px; position: absolute; touch-action: none;
             display: none; 
         }
         .dpad-btn {
-            position: absolute; width: 65px; height: 65px; border-radius: 12px;
+            position: absolute; width: 85px; height: 85px; border-radius: 12px;
             background: rgba(30, 30, 30, 0.8); border: 2px solid rgba(255, 26, 64, 0.3);
-            color: var(--accent); font-size: 1.8rem; display: flex; justify-content: center; align-items: center;
+            color: var(--accent); font-size: 2.2rem; display: flex; justify-content: center; align-items: center;
             box-shadow: 0 5px 10px rgba(0,0,0,0.5); transition: background 0.05s, transform 0.05s; touch-action: none;
         }
         .dpad-up { top: 0; left: 50%; transform: translateX(-50%); }
@@ -165,7 +165,7 @@
 <body>
 
     <div class="header">
-        <div class="brand-line">MICROJOY BY ALIMIN <span class="ver-tag">v1.2.1</span></div>
+        <div class="brand-line">MICROJOY BY ALIMIN <span class="ver-tag">v1.2.3</span></div>
         <div class="status-container">
             <span id="status">Offline</span>
             <button class="btn-connect" id="btnConnect">Connect</button>
@@ -216,7 +216,7 @@
             if (isDpadMode) {
                 joyHitbox.style.display = 'none'; dpZone.style.display = 'block'; btnToggle.innerHTML = '⨀'; 
             } else {
-                joyHitbox.style.display = 'block'; dpZone.style.display = 'none'; btnToggle.innerHTML = '✜'; 
+                joyHitbox.style.display = 'flex'; dpZone.style.display = 'none'; btnToggle.innerHTML = '✜'; 
             }
             cX = 0; cY = 0; forceKineticUpdate();
         });
@@ -233,7 +233,7 @@
                     if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
                     btnFs.innerHTML = "⛶"; 
                 }
-            } catch (err) { alert("Browser blocked rotation."); }
+            } catch (err) { console.warn("Browser blocked rotation."); }
         });
 
         // --- BLE CORE ---
@@ -267,7 +267,6 @@
             connBtn.innerText = "CONNECT"; telEl.classList.add('offline'); telEl.innerText = "SEVERED";
         });
 
-        // --- SISTEM BERATURAN DATA (QUEUE) UNTUK MENGELAK KESESAKAN GATT ---
         let isWriting = false;
         let pendingMessage = null;
 
@@ -303,29 +302,15 @@
             }
         }
 
-        // --- DYNAMIC JOYSTICK ENGINE (v1.2.0) ---
+        // --- STATIC JOYSTICK ENGINE ---
         const base = document.getElementById('joystickBase'), thumb = document.getElementById('thumbstick');
-        let activePointerId = null, originX = 0, originY = 0, currentMaxRadius = 80;
+        let activePointerId = null, originX = 0, originY = 0, currentMaxRadius = 120;
         let edgeHitLock = false; 
         let wasReversing = false;
 
-        joyHitbox.addEventListener('pointerdown', (e) => {
-            if (activePointerId !== null) return;
-            activePointerId = e.pointerId; joyHitbox.setPointerCapture(activePointerId);
-            triggerHaptic(20); base.classList.add('active');
-            const hRect = joyHitbox.getBoundingClientRect();
-            originX = e.clientX - hRect.left; originY = e.clientY - hRect.top;
-            base.style.left = `${originX}px`; base.style.top = `${originY}px`;
-            thumb.style.transform = `translate(-50%, -50%)`; 
-            cX = 0; cY = 0; edgeHitLock = false; wasReversing = false; 
-            currentMaxRadius = base.getBoundingClientRect().width / 2;
-            forceKineticUpdate();
-        });
-
-        joyHitbox.addEventListener('pointermove', (e) => {
-            if (activePointerId !== e.pointerId) return;
-            const hRect = joyHitbox.getBoundingClientRect();
-            let dx = (e.clientX - hRect.left) - originX, dy = (e.clientY - hRect.top) - originY;
+        function handleThumbstickMovement(clientX, clientY) {
+            let dx = clientX - originX;
+            let dy = clientY - originY;
             const dist = Math.hypot(dx, dy);
             
             if (dist >= currentMaxRadius) {
@@ -342,13 +327,31 @@
             if (cY < -5 && !wasReversing) { triggerHaptic(15); wasReversing = true; } 
             else if (cY > 5 && wasReversing) { triggerHaptic(15); wasReversing = false; }
             
-            forceKineticUpdate(); 
+            forceKineticUpdate();
+        }
+
+        joyHitbox.addEventListener('pointerdown', (e) => {
+            if (activePointerId !== null) return;
+            activePointerId = e.pointerId; joyHitbox.setPointerCapture(activePointerId);
+            triggerHaptic(20); base.classList.add('active');
+            
+            const bRect = base.getBoundingClientRect();
+            originX = bRect.left + (bRect.width / 2);
+            originY = bRect.top + (bRect.height / 2);
+            currentMaxRadius = bRect.width / 2;
+            
+            cX = 0; cY = 0; edgeHitLock = false; wasReversing = false; 
+            handleThumbstickMovement(e.clientX, e.clientY);
+        });
+
+        joyHitbox.addEventListener('pointermove', (e) => {
+            if (activePointerId !== e.pointerId) return;
+            handleThumbstickMovement(e.clientX, e.clientY);
         });
 
         function resetJoystick(e) {
             if (activePointerId !== e.pointerId) return;
             activePointerId = null; base.classList.remove('active', 'max-throttle');
-            base.style.left = `50%`; base.style.top = `50%`;
             thumb.style.transform = `translate(-50%, -50%)`; 
             cX = 0; cY = 0; edgeHitLock = false; wasReversing = false;
             forceKineticUpdate();
@@ -391,6 +394,126 @@
         };
         bindBtn('btnA', 'a'); bindBtn('btnB', 'b');
 
+        // --- KEYBOARD SUPPORT ENGINE ---
+        const activeKeys = {};
+        
+        window.addEventListener('keydown', (e) => {
+            if (activeKeys[e.key]) return; // Halang kod berulang bila butang keyboard ditahan
+            let handled = false;
+            
+            // Kawalan D-Pad (Arrow Keys)
+            if (e.key === 'ArrowUp') { cY = 90; document.getElementById('btnUp').classList.add('active-toggle'); handled = true; }
+            if (e.key === 'ArrowDown') { cY = -90; document.getElementById('btnDown').classList.add('active-toggle'); handled = true; }
+            if (e.key === 'ArrowLeft') { cX = -90; document.getElementById('btnLeft').classList.add('active-toggle'); handled = true; }
+            if (e.key === 'ArrowRight') { cX = 90; document.getElementById('btnRight').classList.add('active-toggle'); handled = true; }
+            if (handled) forceKineticUpdate();
+
+            // Kawalan Butang A & B (Key 'a' dan 'b')
+            if (e.key.toLowerCase() === 'a') {
+                send("A\n"); document.getElementById('btnA').classList.add('active-toggle'); handled = true;
+            }
+            if (e.key.toLowerCase() === 'b') {
+                send("B\n"); document.getElementById('btnB').classList.add('active-toggle'); handled = true;
+            }
+
+            if (handled) {
+                e.preventDefault(); // Halang skrin scroll ke bawah/atas bila main pakai arrow keys
+                activeKeys[e.key] = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            let handled = false;
+
+            // Lepaskan D-Pad (Arrow Keys)
+            if (e.key === 'ArrowUp') { cY = 0; document.getElementById('btnUp').classList.remove('active-toggle'); handled = true; }
+            if (e.key === 'ArrowDown') { cY = 0; document.getElementById('btnDown').classList.remove('active-toggle'); handled = true; }
+            if (e.key === 'ArrowLeft') { cX = 0; document.getElementById('btnLeft').classList.remove('active-toggle'); handled = true; }
+            if (e.key === 'ArrowRight') { cX = 0; document.getElementById('btnRight').classList.remove('active-toggle'); handled = true; }
+            if (handled) forceKineticUpdate();
+
+            // Lepaskan Butang A & B
+            if (e.key.toLowerCase() === 'a') {
+                send("a\n"); document.getElementById('btnA').classList.remove('active-toggle'); handled = true;
+            }
+            if (e.key.toLowerCase() === 'b') {
+                send("b\n"); document.getElementById('btnB').classList.remove('active-toggle'); handled = true;
+            }
+
+            if (handled) {
+                e.preventDefault();
+                activeKeys[e.key] = false;
+            }
+        });
+// --- KEYBOARD CONTROL (WINDOWS / PC) ---
+let keyState = {
+    up: false,
+    down: false,
+    left: false,
+    right: false
+};
+
+function updateFromKeyboard() {
+    cX = 0;
+    cY = 0;
+
+    if (keyState.up) cY = 90;
+    if (keyState.down) cY = -90;
+    if (keyState.left) cX = -90;
+    if (keyState.right) cX = 90;
+
+    forceKineticUpdate();
+}
+
+window.addEventListener("keydown", (e) => {
+    switch (e.key.toLowerCase()) {
+        case "arrowup":
+            keyState.up = true;
+            break;
+        case "arrowdown":
+            keyState.down = true;
+            break;
+        case "arrowleft":
+            keyState.left = true;
+            break;
+        case "arrowright":
+            keyState.right = true;
+            break;
+
+        case "j":
+            send("A\n"); // Button A
+            break;
+        case "k":
+            send("B\n"); // Button B
+            break;
+    }
+    updateFromKeyboard();
+});
+
+window.addEventListener("keyup", (e) => {
+    switch (e.key.toLowerCase()) {
+        case "arrowup":
+            keyState.up = false;
+            break;
+        case "arrowdown":
+            keyState.down = false;
+            break;
+        case "arrowleft":
+            keyState.left = false;
+            break;
+        case "arrowright":
+            keyState.right = false;
+            break;
+
+        case "j":
+            send("a\n");
+            break;
+        case "k":
+            send("b\n");
+            break;
+    }
+    updateFromKeyboard();
+});
     </script>
 </body>
 </html>
