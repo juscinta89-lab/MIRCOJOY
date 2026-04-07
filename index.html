@@ -313,35 +313,46 @@
 
         const statusEl = document.getElementById('status'), telEl = document.getElementById('telemetryOut'), connBtn = document.getElementById('btnConnect');
 
+        // FUNGSI INI AKAN DIPANGGIL BILA TERPUTUS HUBUNGAN
+        function onDisconnected() {
+            isConnected = false; 
+            statusEl.innerText = "OFFLINE"; 
+            document.body.classList.remove('is-connected'); // Buang tema online
+            connBtn.innerText = "CONNECT"; 
+            telEl.classList.add('offline'); // Jadikan telemetry kelabu balik
+            telEl.innerText = "SEVERED";
+        }
+
         connBtn.addEventListener('click', async () => {
-            if (bleDevice?.gatt.connected) { bleDevice.gatt.disconnect(); return; }
+            // Jika sudah bersambung dan butang ditekan, putuskan sambungan
+            if (bleDevice?.gatt.connected) { 
+                bleDevice.gatt.disconnect(); 
+                return; 
+            }
+            
             try {
                 bleDevice = await navigator.bluetooth.requestDevice({
                     filters: [{ namePrefix: "BBC" }, { namePrefix: "micro:bit" }],
                     optionalServices: [UART_SERVICE_UUID]
                 });
+
+                // PENTING: Letak listener di sini, selepas bleDevice berjaya dipilih!
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
                 const server = await bleDevice.gatt.connect();
                 const service = await server.getPrimaryService(UART_SERVICE_UUID);
                 rxChar = await service.getCharacteristic(UART_RX_CHARACTERISTIC_UUID);
-                isConnected = true; 
                 
-                // KEMASKINI UI STATUS BERSAMBUNG
+                isConnected = true; 
                 statusEl.innerText = "ONLINE"; 
-                document.body.classList.add('is-connected'); // Pencetus tema visual online
+                document.body.classList.add('is-connected'); // Nyalakan tema merah
                 connBtn.innerText = "DISCONNECT"; 
+                telEl.classList.remove('offline'); // Nyalakan hud
                 
                 await send("mode_analog\n");
-            } catch (e) { console.error("BLE Connection Error:", e); }
-        });
-
-        bleDevice?.addEventListener('gattserverdisconnected', () => {
-            isConnected = false; 
-            
-            // KEMASKINI UI STATUS TERPUTUS
-            statusEl.innerText = "OFFLINE"; 
-            document.body.classList.remove('is-connected'); // Pencetus tema visual offline
-            connBtn.innerText = "CONNECT"; 
-            telEl.innerText = "SEVERED";
+            } catch (e) { 
+                console.error("BLE Connection Error:", e); 
+            }
         });
 
         let isWriting = false;
