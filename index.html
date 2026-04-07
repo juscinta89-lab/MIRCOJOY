@@ -16,6 +16,7 @@
             --accent: #ff1a40;       /* Merah Utama */
             --accent-dim: #4d0010;   /* Merah Gelap untuk garisan */
             --danger: #ffbb00;       /* Kuning amaran supaya kontra dengan merah */
+            --success: #00e676;      /* Hijau untuk status bersambung */
             --text-main: #e0e0e0;
         }
 
@@ -37,22 +38,69 @@
             border-bottom: 1px solid var(--accent-dim);
             display: flex; justify-content: space-between; align-items: center;
             z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: border-color 0.4s;
         }
         
-        .brand-line { font-weight: bold; color: var(--accent); letter-spacing: 1px; font-size: 1rem; white-space: nowrap; }
+        /* Bila bersambung, header ada sedikit pantulan warna */
+        body.is-connected .header {
+            border-bottom: 1px solid rgba(255, 26, 64, 0.4);
+        }
+        
+        .brand-line { font-weight: bold; color: var(--accent); letter-spacing: 1px; font-size: 1rem; white-space: nowrap; text-shadow: 0 0 5px rgba(255, 26, 64, 0.3); }
         .ver-tag { color: #ffffff; font-size: 0.6rem; opacity: 0.5; margin-left: 6px; }
         
-        .status-container { display: flex; align-items: center; gap: 10px; }
-        #status { font-size: 0.7rem; color: var(--danger); text-transform: uppercase; font-weight: bold; transition: color 0.3s; }
-        #status.connected { color: var(--accent); }
+        .status-container { display: flex; align-items: center; gap: 8px; }
+        
+        /* DOT INDICATOR BARU */
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background-color: #444; /* Warna asal offline */
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+            transition: all 0.4s ease;
+        }
+        
+        /* Animasi Dot bila Online */
+        body.is-connected .status-dot {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success), 0 0 15px var(--success);
+        }
+
+        #status { 
+            font-size: 0.7rem; color: #666; text-transform: uppercase; 
+            font-weight: bold; transition: color 0.4s, text-shadow 0.4s; 
+            min-width: 55px;
+        }
+        body.is-connected #status { 
+            color: var(--success); 
+            text-shadow: 0 0 5px rgba(0, 230, 118, 0.4);
+        }
 
         .btn-connect {
             background: rgba(255, 26, 64, 0.1); color: var(--accent);
-            border: 1px solid var(--accent); padding: 7px 12px;
-            font-size: 0.8rem; text-transform: uppercase; cursor: pointer;
+            border: 1px solid var(--accent); padding: 7px 15px;
+            font-size: 0.8rem; text-transform: uppercase; cursor: pointer; font-weight: bold;
             clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-            transition: background 0.2s, color 0.2s;
+            transition: all 0.3s;
         }
+        
+        /* Animasi pulsing button Connect bila offline */
+        body:not(.is-connected) .btn-connect {
+            animation: pulse-btn 2s infinite;
+        }
+        @keyframes pulse-btn {
+            0% { box-shadow: 0 0 0 0 rgba(255, 26, 64, 0.4); border-color: rgba(255, 26, 64, 0.5); }
+            70% { box-shadow: 0 0 0 6px rgba(255, 26, 64, 0); border-color: rgba(255, 26, 64, 1); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 26, 64, 0); border-color: rgba(255, 26, 64, 0.5); }
+        }
+
+        body.is-connected .btn-connect {
+            background: rgba(255, 26, 64, 0.2);
+            color: #fff;
+            border-color: rgba(255, 26, 64, 0.5);
+            animation: none; /* Berhenti animasi bila dah connect */
+        }
+
         .btn-connect:active { background: var(--accent); color: #000; }
 
         /* --- CONTROL GRID --- */
@@ -63,14 +111,32 @@
             position: relative;
         }
 
+        /* DIM EFFECT BILA OFFLINE */
+        .left-thumb-zone, .action-column {
+            transition: opacity 0.5s ease, filter 0.5s ease;
+        }
+        body:not(.is-connected) .left-thumb-zone,
+        body:not(.is-connected) .action-column {
+            opacity: 0.35;
+            filter: grayscale(80%);
+        }
+        body.is-connected .left-thumb-zone,
+        body.is-connected .action-column {
+            opacity: 1;
+            filter: grayscale(0%);
+        }
+
         .telemetry-hud {
             background: #000; border: 1px solid var(--accent-dim);
             padding: 8px 18px; border-radius: 20px;
             font-size: 1.1rem; font-weight: bold; color: var(--accent);
-            text-align: center; box-shadow: 0 0 15px rgba(255, 26, 64, 0.1);
-            z-index: 10; transition: color 0.3s;
+            text-align: center; box-shadow: 0 0 15px rgba(255, 26, 64, 0.2);
+            z-index: 10; transition: all 0.4s ease;
+            letter-spacing: 2px;
         }
-        .telemetry-hud.offline { color: #444; border-color: #222; box-shadow: none; }
+        body:not(.is-connected) .telemetry-hud { 
+            color: #444; border-color: #222; box-shadow: none; background: #0a0a0a; letter-spacing: 1px;
+        }
 
         /* Left Thumb Zone */
         .left-thumb-zone {
@@ -84,9 +150,9 @@
             width: 240px; height: 240px; background: rgba(20, 20, 20, 0.6);
             border: 2px solid rgba(255, 26, 64, 0.2); border-radius: 50%;
             position: relative;
-            transition: border-color 0.2s; backdrop-filter: blur(4px);
+            transition: border-color 0.2s, box-shadow 0.3s; backdrop-filter: blur(4px);
         }
-        .joystick-base.active { border-color: rgba(255, 26, 64, 0.5); }
+        .joystick-base.active { border-color: rgba(255, 26, 64, 0.5); box-shadow: 0 0 20px rgba(255, 26, 64, 0.2); }
         .joystick-base.max-throttle { border-color: var(--danger); box-shadow: 0 0 20px rgba(255, 187, 0, 0.3); }
         .joystick-base::before, .joystick-base::after { content: ''; position: absolute; background: rgba(255, 26, 64, 0.2); }
         .joystick-base::before { width: 1px; height: 100%; left: 50%; top: 0; }
@@ -109,7 +175,7 @@
             position: absolute; width: 85px; height: 85px; border-radius: 12px;
             background: rgba(30, 30, 30, 0.8); border: 2px solid rgba(255, 26, 64, 0.3);
             color: var(--accent); font-size: 2.2rem; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 5px 10px rgba(0,0,0,0.5); transition: background 0.05s, transform 0.05s; touch-action: none;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5); transition: background 0.05s, transform 0.05s, box-shadow 0.1s; touch-action: none;
         }
         .dpad-up { top: 0; left: 50%; transform: translateX(-50%); }
         .dpad-down { bottom: 0; left: 50%; transform: translateX(-50%); }
@@ -167,13 +233,14 @@
     <div class="header">
         <div class="brand-line">MICROJOY BY ALIMIN <span class="ver-tag">v1.2.3</span></div>
         <div class="status-container">
+            <div class="status-dot"></div>
             <span id="status">Offline</span>
             <button class="btn-connect" id="btnConnect">Connect</button>
         </div>
     </div>
 
     <div class="control-grid">
-        <div class="telemetry-hud offline" id="telemetryOut">AWAITING</div>
+        <div class="telemetry-hud" id="telemetryOut">AWAITING</div>
         
         <div class="left-thumb-zone">
             <div class="joystick-hitbox" id="joystickHitbox">
@@ -256,15 +323,25 @@
                 const server = await bleDevice.gatt.connect();
                 const service = await server.getPrimaryService(UART_SERVICE_UUID);
                 rxChar = await service.getCharacteristic(UART_RX_CHARACTERISTIC_UUID);
-                isConnected = true; statusEl.innerText = "ONLINE"; statusEl.classList.add('connected');
-                connBtn.innerText = "DISCONNECT"; telEl.classList.remove('offline');
+                isConnected = true; 
+                
+                // KEMASKINI UI STATUS BERSAMBUNG
+                statusEl.innerText = "ONLINE"; 
+                document.body.classList.add('is-connected'); // Pencetus tema visual online
+                connBtn.innerText = "DISCONNECT"; 
+                
                 await send("mode_analog\n");
             } catch (e) { console.error("BLE Connection Error:", e); }
         });
 
         bleDevice?.addEventListener('gattserverdisconnected', () => {
-            isConnected = false; statusEl.innerText = "OFFLINE"; statusEl.classList.remove('connected');
-            connBtn.innerText = "CONNECT"; telEl.classList.add('offline'); telEl.innerText = "SEVERED";
+            isConnected = false; 
+            
+            // KEMASKINI UI STATUS TERPUTUS
+            statusEl.innerText = "OFFLINE"; 
+            document.body.classList.remove('is-connected'); // Pencetus tema visual offline
+            connBtn.innerText = "CONNECT"; 
+            telEl.innerText = "SEVERED";
         });
 
         let isWriting = false;
@@ -445,75 +522,44 @@
                 activeKeys[e.key] = false;
             }
         });
-// --- KEYBOARD CONTROL (WINDOWS / PC) ---
-let keyState = {
-    up: false,
-    down: false,
-    left: false,
-    right: false
-};
 
-function updateFromKeyboard() {
-    cX = 0;
-    cY = 0;
+        // --- KEYBOARD CONTROL (WINDOWS / PC) ---
+        let keyState = {
+            up: false, down: false, left: false, right: false
+        };
 
-    if (keyState.up) cY = 90;
-    if (keyState.down) cY = -90;
-    if (keyState.left) cX = -90;
-    if (keyState.right) cX = 90;
+        function updateFromKeyboard() {
+            cX = 0; cY = 0;
+            if (keyState.up) cY = 90;
+            if (keyState.down) cY = -90;
+            if (keyState.left) cX = -90;
+            if (keyState.right) cX = 90;
+            forceKineticUpdate();
+        }
 
-    forceKineticUpdate();
-}
+        window.addEventListener("keydown", (e) => {
+            switch (e.key.toLowerCase()) {
+                case "arrowup": keyState.up = true; break;
+                case "arrowdown": keyState.down = true; break;
+                case "arrowleft": keyState.left = true; break;
+                case "arrowright": keyState.right = true; break;
+                case "j": send("A\n"); break;
+                case "k": send("B\n"); break;
+            }
+            updateFromKeyboard();
+        });
 
-window.addEventListener("keydown", (e) => {
-    switch (e.key.toLowerCase()) {
-        case "arrowup":
-            keyState.up = true;
-            break;
-        case "arrowdown":
-            keyState.down = true;
-            break;
-        case "arrowleft":
-            keyState.left = true;
-            break;
-        case "arrowright":
-            keyState.right = true;
-            break;
-
-        case "j":
-            send("A\n"); // Button A
-            break;
-        case "k":
-            send("B\n"); // Button B
-            break;
-    }
-    updateFromKeyboard();
-});
-
-window.addEventListener("keyup", (e) => {
-    switch (e.key.toLowerCase()) {
-        case "arrowup":
-            keyState.up = false;
-            break;
-        case "arrowdown":
-            keyState.down = false;
-            break;
-        case "arrowleft":
-            keyState.left = false;
-            break;
-        case "arrowright":
-            keyState.right = false;
-            break;
-
-        case "j":
-            send("a\n");
-            break;
-        case "k":
-            send("b\n");
-            break;
-    }
-    updateFromKeyboard();
-});
+        window.addEventListener("keyup", (e) => {
+            switch (e.key.toLowerCase()) {
+                case "arrowup": keyState.up = false; break;
+                case "arrowdown": keyState.down = false; break;
+                case "arrowleft": keyState.left = false; break;
+                case "arrowright": keyState.right = false; break;
+                case "j": send("a\n"); break;
+                case "k": send("b\n"); break;
+            }
+            updateFromKeyboard();
+        });
     </script>
 </body>
 </html>
